@@ -1,37 +1,4 @@
-// This class represents a todo item and its associated
-// data: the todo title and a flag that shows whether the
-// todo item is done.
-
-class Todo {
-  static DONE_MARKER = "X";
-  static UNDONE_MARKER = " ";
-
-  constructor(title) {
-    this.title = title;
-    this.done = false;
-  }
-
-  toString() {
-    let marker = this.isDone() ? Todo.DONE_MARKER : Todo.UNDONE_MARKER;
-    return `[${marker}] ${this.title}`;
-  }
-
-  markDone() {
-    this.done = true;
-  }
-
-  markUndone() {
-    this.done = false;
-  }
-
-  isDone() {
-    return this.done;
-  }
-
-  getTitle() {
-    return this.title;
-  }
-}
+const Todo = require('./todo.js');
 
 class TodoList {
   constructor(title) {
@@ -39,12 +6,12 @@ class TodoList {
     this.todos = [];
   }
 
-  add(todoItem) {
-    if (!(todoItem instanceof Todo)) {
+  add(todo) {
+    if (!(todo instanceof Todo)) {
       throw new TypeError("can only add Todo objects");
     }
 
-    this.todos.push(todoItem);
+    this.todos.push(todo);
   }
 
   size() {
@@ -64,12 +31,6 @@ class TodoList {
     return this.todos[index];
   }
 
-  _validateIndex(index) {
-    if (!(index in this.todos)) {
-      throw new ReferenceError(`invalid index: ${index}`);
-    }
-  }
-
   markDoneAt(index) {
     this.itemAt(index).markDone();
   }
@@ -83,11 +44,11 @@ class TodoList {
   }
 
   shift() {
-    this.todos.shift();
+    return this.todos.shift();
   }
 
   pop() {
-    this.todos.pop();
+    return this.todos.pop();
   }
 
   removeAt(index) {
@@ -102,43 +63,36 @@ class TodoList {
   }
 
   forEach(callback) {
-    this.todos.forEach(callback);
+    this.todos.forEach(todo => callback(todo));
   }
 
-  filter(condition) {
-    let tempList = new TodoList(this.title);
-
-    this.todos.forEach(ele => {
-      if (condition(ele)) {
-        tempList.add(ele);
+  filter(callback) {
+    let newList = new TodoList(this.title);
+    this.forEach(todo => {
+      if (callback(todo)) {
+        newList.add(todo);
       }
     });
 
-    return tempList;
+    return newList;
   }
 
   findByTitle(title) {
-    for (let idx = 0; idx < this.todos.length; idx++) {
-      if (this.todos[idx].title === title) {
-        return this.todos[idx];
-      }
-    }
-    return undefined;
+    return this.filter(todo => todo.getTitle() === title).first();
   }
 
   allDone() {
-    return this.todos.filter(ele => ele.isDone() === true);
+    return this.filter(todo => todo.isDone());
   }
 
-  allNoteDone() {
-    return this.todos.filter(ele => ele.isNotDone() === true);
+  allNotDone() {
+    return this.filter(todo => !todo.isDone());
   }
 
   markDone(title) {
-    for (let idx = 0; idx < this.todos.length; idx++) {
-      if (this.todos[idx].title === title) {
-        this.todos[idx].markDone();
-      }
+    let todo = this.findByTitle(title);
+    if (todo !== undefined) {
+      todo.markDone();
     }
   }
 
@@ -151,10 +105,14 @@ class TodoList {
   }
 
   toArray() {
-    let arr = [];
-    this.todos.forEach(ele => {
-      arr.push(ele);
-    });
-    return arr;
+    return this.todos.slice();
+  }
+
+  _validateIndex(index) { // _ in name indicates "private" method
+    if (!(index in this.todos)) {
+      throw new ReferenceError(`invalid index: ${index}`);
+    }
   }
 }
+
+module.exports = TodoList;
